@@ -1,35 +1,39 @@
 package org.example;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
 
 public class Injector {
-    public <T> void inject(T obj, String configFileName) throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public <T> void inject(T obj, String configFileName) {
+        // получаем все настройки из конфигурационного файла
         Properties properties=loadProperties(configFileName);
-
-        for(Field field : obj.getClass().getFields()){
-            if(field.isAnnotationPresent(AutoInjectable.class)){
-                String implementationClassName = properties.getProperty(field.getType().getName());
-                Class<?> implementationClass;
-                if(implementationClassName!=null){
-                    implementationClass = Class.forName(implementationClassName);
-                    Object instance = implementationClass.getDeclaredConstructor().newInstance();
-
-                    field.setAccessible(true);
-                    field.set(obj, instance);
+        try {
+            for (Field field : obj.getClass().getDeclaredFields()) {
+                if (field.isAnnotationPresent(AutoInjectable.class)) {
+                    // получаем название класса, который должен быть присвоен полю
+                    String implementationClassName = properties.getProperty(field.getType().getName());
+                    if (implementationClassName != null) {
+                        Class<?> implementationClass = Class.forName(implementationClassName);
+                        // инициализируем нужный объект с помощью конструктора
+                        Object instance = implementationClass.getDeclaredConstructor().newInstance();
+                        // присваиваем полю проинициализированный объект
+                        field.setAccessible(true);
+                        field.set(obj, instance);
+                    }
                 }
             }
+        }
+        catch(Exception e){
+            e.printStackTrace();
         }
     }
 
     private Properties loadProperties(String configFileName){
         Properties properties=new Properties();
 
-        try(InputStream inputStream=new FileInputStream(configFileName)){
+        try(InputStream inputStream=getClass().getClassLoader().getResourceAsStream(configFileName)){
             properties.load(inputStream);
         }
         catch(IOException e){
