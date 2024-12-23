@@ -6,6 +6,13 @@ import java.lang.reflect.Field;
 import java.util.Properties;
 
 public class Injector {
+    /**
+     * Метод проверяет в переданном объекте все поля на наличие у них аннотации {@link AutoInjectable}.
+     * Все такие поля будут автоматически проинициализированы исходя из данных файла configFileName
+     * @param obj объект, в который будут внедряться зависимости
+     * @param configFileName имя файла, из которого будут внедряться зависимости
+     * @param <T>
+     */
     public <T> void inject(T obj, String configFileName) {
         // получаем все настройки из конфигурационного файла
         Properties properties=loadProperties(configFileName);
